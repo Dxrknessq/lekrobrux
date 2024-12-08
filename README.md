@@ -1,1 +1,1 @@
-# lekrobrux
+contact me if you can fix this script or tell me how it works. it have config.ini file too and combo.txt and proxies.txt and results folder and of course the whole script here is the main python script
